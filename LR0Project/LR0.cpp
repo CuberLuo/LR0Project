@@ -298,11 +298,10 @@ bool isEqual(vector<string> vec1, vector<string> vec2) {
 }
 
 int findIndex(vector<vector<string>> vec, vector<string> target) {
-	auto it = std::find_if(vec.begin(), vec.end(), [&](const vector<string>& v) {
-		return isEqual(v, target);
-		});
-	if (it != vec.end()) {
-		return it - vec.begin();
+	for (int i = 0; i < vec.size(); ++i) {
+		if (isEqual(vec[i], target)) {
+			return i;
+		}
 	}
 	return -1;
 }
