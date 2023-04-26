@@ -8,6 +8,7 @@ using namespace std;
 
 int i_cnt = 0;
 vector<vector<string>> lr_vector;
+vector<int> lr_vector_indices;
 
 bool check_over(string);
 bool check_vector_over(vector<string>);
@@ -22,10 +23,11 @@ void printStringVector(vector<string>);
 vector<string> tackleisNonterminalVector(vector<string>, vector<string>);
 void writeFile(string, string);
 void printIndex();
-bool handleVector(vector<string>);
+void handleLR0(vector<string>, vector<string>, int);
 int getColIndex(vector<char>, char);
 int getCharType(char);
-
+bool isEqual(vector<string>, vector<string>);
+int findIndex(vector<vector<string>>, vector<string>);
 
 int main() {
 	vector<string> lr0 = { "S->E", "E->aA", "E->bB", "A->cA", "A->d", "B->cB", "B->d" };
@@ -56,53 +58,13 @@ int main() {
 		vector<string> col_vector;
 		table_vector.push_back(col_vector);
 	}
-
-	
-	
 	vector<string> tmp_vector = { lr0[0] };
-	tmp_vector = tackleisNonterminalVector(tmp_vector,lr0);
-	
-	
-	printIndex();
-	printStringVector(tmp_vector);
-	cout << "-----------------------------\n";
-
-	lr_vector.push_back(tmp_vector);
-	handleVector(lr0);
-
-	vector<char> char_vector = getAllCharAfterDot(lr_vector[0]);
-	for (char c : char_vector) {
-		printIndex();
-		vector<string> movedVector = getMovedVector(tmp_vector, c);
-		cout <<">>>>"<< c << endl;
-
-		movedVector = tackleisNonterminalVector(movedVector, lr0);
-		
-		
-		printStringVector(movedVector);
-		lr_vector.push_back(movedVector);
-		bool vector_over = check_vector_over(movedVector);
-		if (vector_over) {
-			cout << "\nvector over!!!\n";
-		}
-		else {
-			cout << "\nnot over!\n";
-		}
-		cout << "-----------------------------\n";
-	}
-
-
-
-
+	handleLR0(lr0, tmp_vector,0);
 	/*for (string rule : lr0) {
 		cout << rule << endl;
 	}
 	cout << endl;*/
 
-
-
-
-	
 	writeFile("output.txt", result_stream.str());
 	return 0;
 }
@@ -128,6 +90,7 @@ bool check_vector_over(vector<string> vec) {
 //检查是不是vec中的每个vector都处于结束状态
 bool check_lrvector_over(vector<vector<string>> vec) {
 	bool isOver = true;
+	if (vec.size() == 0) return false;
 	for (vector<string> v : vec) {
 		if (!check_vector_over(v)) {
 			isOver = false;
@@ -239,11 +202,67 @@ void writeFile(string outfilename, string content) {
 }
 //打印当前的状态索引
 void printIndex() {
-	cout << "I" << i_cnt++ << ":" << endl;
+	cout << "I" << i_cnt << ":" << endl;
 }
 
-bool handleVector(vector<string> vec) {
-	return true;
+void handleLR0(vector<string> lr0, vector<string> v,int v_index) {
+	//if (check_lrvector_over(lr_vector)) return;
+	//vector<string> tmp_vector = v;
+	v = tackleisNonterminalVector(v, lr0);
+
+	if (i_cnt == 0) {
+		printIndex();
+		printStringVector(v);
+		cout << "-----------------------------\n";
+		lr_vector.push_back(v);
+		lr_vector_indices.push_back(v_index);
+		i_cnt++;
+	}
+	
+
+	
+	vector<char> char_vector = getAllCharAfterDot(v);
+	vector<vector<string>> notOverVectors;
+	vector<int> notOverVectorIndices;
+	for (char c : char_vector) {
+		vector<string> movedVector = getMovedVector(v, c);
+		movedVector = tackleisNonterminalVector(movedVector, lr0);
+		if (isEqual(v, movedVector)) {
+			cout << "I" << v_index << "   " << ">>>>" << c << "   " << "I" << v_index << endl;
+			cout << "-----------------------------\n";
+			continue;
+		}
+			
+		int mIndex = findIndex(lr_vector, movedVector);
+		if (mIndex != -1) {
+			cout << "I" << v_index << "   " << ">>>>" << c << "   " << "I" << mIndex << endl;
+			cout << "-----------------------------\n";
+			continue;
+		}
+			
+		printIndex();
+		cout<<"I"<<v_index<< "   " << ">>>>" << c <<"   "<<"I"<<i_cnt << endl;
+		printStringVector(movedVector);
+		lr_vector.push_back(movedVector);
+		lr_vector_indices.push_back(v_index);
+		bool vector_over = check_vector_over(movedVector);
+		if (vector_over) {
+			cout << "\nvector over!!!\n";
+		}
+		else {
+			cout << "\nnot over!\n";
+			notOverVectors.push_back(movedVector);
+			notOverVectorIndices.push_back(i_cnt);
+		}
+		//cout << "lr_vector size:" << lr_vector.size() << endl;
+		cout << "-----------------------------\n";
+		i_cnt++;
+		
+	}
+	//递归结束条件:notOverVectors.size()为0
+	for (size_t i = 0; i < notOverVectors.size(); i++) {
+		handleLR0(lr0, notOverVectors[i], notOverVectorIndices[i]);
+	}
 }
 //根据字符找到二维表中列的索引
 int getColIndex(vector<char> symbol_vector, char c) {
@@ -264,4 +283,26 @@ int getCharType(char c) {
 		return 0;
 	else
 		return 1;
+}
+
+bool isEqual(vector<string> vec1, vector<string> vec2) {
+	if (vec1.size() != vec2.size()) {  // 先判断大小是否相等
+		return false;
+	}
+	for (int i = 0; i < vec1.size(); i++) {  // 逐个比较每个元素是否相等
+		if (vec1[i] != vec2[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+int findIndex(vector<vector<string>> vec, vector<string> target) {
+	auto it = std::find_if(vec.begin(), vec.end(), [&](const vector<string>& v) {
+		return isEqual(v, target);
+		});
+	if (it != vec.end()) {
+		return it - vec.begin();
+	}
+	return -1;
 }
