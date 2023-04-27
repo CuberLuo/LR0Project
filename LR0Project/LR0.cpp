@@ -26,6 +26,7 @@ void printStringVector(vector<string>);
 vector<string> tackleisNonterminalVector(vector<string>, vector<string>);
 void writeFile(string, string);
 void printIndex();
+void addRow();
 void handleLR0(vector<string>, vector<string>, int);
 int getColIndex(char);
 int getCharType(char);
@@ -33,6 +34,7 @@ bool isEqual(vector<string>, vector<string>);
 int findIndex(vector<vector<string>>, vector<string>);
 void printTable();
 int findIndexInLR0(vector<string>, string);
+int getNonterminalNum();
 
 int main() {
 	vector<string> lr0 = origin_lr0;
@@ -46,9 +48,7 @@ int main() {
 	
 	vector<string> tmp_vector = { lr0[0] };
 	tmp_vector = tackleisNonterminalVector(tmp_vector, lr0);
-	printIndex();
-	printStringVector(tmp_vector);
-	cout << "-----------------------------\n";
+	addRow();
 	lr_vector.push_back(tmp_vector);
 	lr_vector_indices.push_back(0);
 	i_cnt++;
@@ -81,7 +81,6 @@ int main() {
 	}
 
 	writeFile("output.txt", result_stream.str());
-	//printTable();
 	return 0;
 }
 
@@ -210,7 +209,6 @@ void writeFile(string outfilename, string content) {
 	}
 	else {
 		outfile << content;
-		cout << endl;
 		cout << outfilename << ": " << endl;
 		cout << content << endl;
 	}
@@ -219,7 +217,9 @@ void writeFile(string outfilename, string content) {
 //打印当前的状态索引
 void printIndex() {
 	cout << "I" << i_cnt << ":" << endl;
-	vector<string> row_vector(8," ");
+}
+void addRow() {
+	vector<string> row_vector(symbol_vector.size(), " ");
 	table_vector.push_back(row_vector);
 }
 
@@ -232,8 +232,6 @@ void handleLR0(vector<string> lr0, vector<string> v,int v_index) {
 		vector<string> movedVector = getMovedVector(v, c);
 		movedVector = tackleisNonterminalVector(movedVector, lr0);
 		if (isEqual(v, movedVector)) {
-			cout << "I" << v_index << "   " << ">>>>" << c << "   " << "I" << v_index << endl;
-			cout << "-----------------------------\n";
 			int colIndex = getColIndex(c);
 			if (getCharType(c) == 0)
 				table_vector[v_index][colIndex] = to_string(v_index);
@@ -244,8 +242,6 @@ void handleLR0(vector<string> lr0, vector<string> v,int v_index) {
 			
 		int mIndex = findIndex(lr_vector, movedVector);
 		if (mIndex != -1) {
-			cout << "I" << v_index << "   " << ">>>>" << c << "   " << "I" << mIndex << endl;
-			cout << "-----------------------------\n";
 			int colIndex = getColIndex(c);
 			if (getCharType(c) == 0)
 				table_vector[v_index][colIndex] = to_string(mIndex);
@@ -253,10 +249,7 @@ void handleLR0(vector<string> lr0, vector<string> v,int v_index) {
 				table_vector[v_index][colIndex] = "S" + to_string(mIndex);
 			continue;
 		}
-			
-		printIndex();
-		cout<<"I"<<v_index<< "   " << ">>>>" << c <<"   "<<"I"<<i_cnt << endl;
-		printStringVector(movedVector);
+		addRow();
 
 		int colIndex = getColIndex(c);
 		if (getCharType(c) == 0)
@@ -264,7 +257,6 @@ void handleLR0(vector<string> lr0, vector<string> v,int v_index) {
 		else
 			table_vector[v_index][colIndex] = "S" + to_string(i_cnt);
 		
-
 		lr_vector.push_back(movedVector);
 		lr_vector_indices.push_back(v_index);
 		bool vector_over = check_vector_over(movedVector);
@@ -276,18 +268,16 @@ void handleLR0(vector<string> lr0, vector<string> v,int v_index) {
 			}
 			else {
 				int pos_index = findIndexInLR0(origin_lr0, movedVector[0]);
-				for (int i = 0; i < 5; i++) {
+				for (int i = 0; i < symbol_vector.size()-getNonterminalNum(); i++) {
 					table_vector[i_cnt][i] = "r" + to_string(pos_index);
 				}
 			}
 			
 		}
 		else{
-			cout << "\nnot over!\n";
 			notOverVectors.push_back(movedVector);
 			notOverVectorIndices.push_back(i_cnt);
 		}
-		cout << "-----------------------------\n";
 		i_cnt++;
 		
 	}
@@ -346,7 +336,7 @@ void printTable() {
 		cout << endl;
 	}
 }
-
+//判断string是否在vector<string>中,返回下标
 int findIndexInLR0(vector<string> lr0, string s) {
 	for (int i = 0; i < lr0.size(); i++) {
 		if (lr0[i] == s) {
@@ -354,4 +344,14 @@ int findIndexInLR0(vector<string> lr0, string s) {
 		}
 	}
 	return -1;
+}
+//得到非终结符的个数
+int getNonterminalNum() {
+	int cnt = 0;
+	for (char c : symbol_vector) {
+		if (getCharType(c) == 0) {
+			cnt++;
+		}
+	}
+	return cnt;
 }
