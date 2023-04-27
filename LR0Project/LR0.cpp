@@ -31,8 +31,9 @@ int getCharType(char);
 bool isEqual(vector<string>, vector<string>);
 int findIndex(vector<vector<string>>, vector<string>);
 int findIndexInLR0(vector<string>, string);
+int findIndexInCharVector(vector<char>, char);
 int getNonterminalNum();
-stringstream getOutputStream();
+void handleOutput();
 
 int main() {
 	vector<string> lr0 = origin_lr0;
@@ -50,10 +51,8 @@ int main() {
 	i_cnt++;
 
 	handleLR0(lr0, tmp_vector,0);
-
-	stringstream result_stream=getOutputStream();
+	handleOutput();
 	
-	writeFile("output.txt", result_stream.str());
 	return 0;
 }
 
@@ -135,7 +134,7 @@ vector<char> getAllCharAfterDot(vector<string> vec) {
 	for (string rule : vec) {
 		char after_char = getCharAfterDot(rule);
 		//"."后面有字符并且该字符未在result_vector中出现过
-		if (after_char != ' ' && find(result_vector.begin(), result_vector.end(), after_char) == result_vector.end())
+		if (after_char != ' ' && findIndexInCharVector(result_vector,after_char)==-1)
 			result_vector.push_back(after_char);
 	}
 	return result_vector;
@@ -160,7 +159,7 @@ vector<string> tackleisNonterminalVector(vector<string> v, vector<string> lr0) {
 			vector<string> extend_vector = getRuleVectorWithStartLetter(t_letter, lr0);
 			for (string rule : extend_vector) {
 				//判断产生式是否已经在vector中
-				if (find(v.begin(), v.end(), rule) == v.end()) {
+				if (findIndexInLR0(v,rule)==-1) {
 					v.push_back(rule);
 				}
 			}
@@ -300,6 +299,14 @@ int findIndexInLR0(vector<string> lr0, string s) {
 	}
 	return -1;
 }
+int findIndexInCharVector(vector<char> v, char c) {
+	for (int i = 0; i < v.size(); i++) {
+		if (v[i] == c) {
+			return i;
+		}
+	}
+	return -1;
+}
 //得到非终结符的个数
 int getNonterminalNum() {
 	int cnt = 0;
@@ -310,8 +317,8 @@ int getNonterminalNum() {
 	}
 	return cnt;
 }
-//获取输出流
-stringstream getOutputStream() {
+//处理输出
+void handleOutput() {
 	stringstream result_stream;
 	result_stream << "|" << setw(10) << "|"
 		<< setw(16) << "ACTION" << setw(9) << "|"
@@ -336,5 +343,5 @@ stringstream getOutputStream() {
 		}
 		result_stream << endl;
 	}
-	return result_stream;
+	writeFile("output.txt", result_stream.str());
 }
