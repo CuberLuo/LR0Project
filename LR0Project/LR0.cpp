@@ -9,6 +9,9 @@ using namespace std;
 int i_cnt = 0;
 vector<vector<string>> lr_vector;
 vector<int> lr_vector_indices;
+vector<vector<string>> table_vector;
+vector<string> origin_lr0 = { "S->E", "E->aA", "E->bB", "A->cA", "A->d", "B->cB", "B->d" };
+vector<char> symbol_vector = { 'a','b','c','d','#','E','A','B' };
 
 bool check_over(string);
 bool check_vector_over(vector<string>);
@@ -24,48 +27,61 @@ vector<string> tackleisNonterminalVector(vector<string>, vector<string>);
 void writeFile(string, string);
 void printIndex();
 void handleLR0(vector<string>, vector<string>, int);
-int getColIndex(vector<char>, char);
+int getColIndex(char);
 int getCharType(char);
 bool isEqual(vector<string>, vector<string>);
 int findIndex(vector<vector<string>>, vector<string>);
+void printTable();
+int findIndexInLR0(vector<string>, string);
 
 int main() {
-	vector<string> lr0 = { "S->E", "E->aA", "E->bB", "A->cA", "A->d", "B->cB", "B->d" };
-	stringstream result_stream;
-	result_stream << setw(8) << "Status" << setw(2) << "|"
-		<< setw(16) << "ACTION" << setw(9) << "|"
-		<< setw(9) << "GOTO" << setw(6) << "|\n";
-	result_stream << setw(10) << "|"
-		<< setw(5) << "a|"
-		<< setw(5) << "b|"
-		<< setw(5) << "c|"
-		<< setw(5) << "d|"
-		<< setw(5) << "#|";
-	result_stream << setw(5) << "A|"
-		<< setw(5) << "B|"
-		<< setw(5) << "E|\n";
-
-
+	vector<string> lr0 = origin_lr0;
 	for (int i = 0; i < lr0.size(); i++) {
 		size_t arrow_pos = lr0[i].find("->");
 		lr0[i].insert(arrow_pos + 2, ".");
 	}
 	bool isOver = false;
-	vector<char> symbol_vector = { 'a','b','c','d','#','A','B','E' };
+	
 	//二维数组表格初始化
-	vector<vector<string>> table_vector;
-	for (int i = 0; i < symbol_vector.size(); i++) {
-		vector<string> col_vector;
-		table_vector.push_back(col_vector);
-	}
+	
 	vector<string> tmp_vector = { lr0[0] };
+	tmp_vector = tackleisNonterminalVector(tmp_vector, lr0);
+	printIndex();
+	printStringVector(tmp_vector);
+	cout << "-----------------------------\n";
+	lr_vector.push_back(tmp_vector);
+	lr_vector_indices.push_back(0);
+	i_cnt++;
+
 	handleLR0(lr0, tmp_vector,0);
-	/*for (string rule : lr0) {
-		cout << rule << endl;
+
+	stringstream result_stream;
+	result_stream <<"|" << setw(10) << "|"
+		<< setw(16) << "ACTION" << setw(9) << "|"
+		<< setw(9) << "GOTO" << setw(7) << "|\n";
+
+	result_stream <<"|" << setw(7)<<"Status"<<setw(3) << "|" << setw(25) << setfill('-') << "|" << setw(16) << "|\n";
+	result_stream.fill(' ');
+
+	result_stream <<"|" << setw(10) << "|";
+	for (char symbol : symbol_vector) {
+		result_stream <<setw(4) << symbol << "|";
 	}
-	cout << endl;*/
+	result_stream << endl;
+
+	result_stream << "|" << setw(10) <<setfill('-') << "|" << setw(25)  << "|" << setw(16) << "|\n";
+	result_stream.fill(' ');
+
+	for (int i = 0; i < table_vector.size(); i++) {
+		result_stream <<"|"<< setw(5) << i << setw(5) << "|";
+		for (int j = 0; j < table_vector[i].size(); j++) {
+			result_stream << setw(4) << table_vector[i][j] << "|";
+		}
+		result_stream << endl;
+	}
 
 	writeFile("output.txt", result_stream.str());
+	//printTable();
 	return 0;
 }
 
@@ -203,24 +219,12 @@ void writeFile(string outfilename, string content) {
 //打印当前的状态索引
 void printIndex() {
 	cout << "I" << i_cnt << ":" << endl;
+	vector<string> row_vector(8," ");
+	table_vector.push_back(row_vector);
 }
 
 void handleLR0(vector<string> lr0, vector<string> v,int v_index) {
-	//if (check_lrvector_over(lr_vector)) return;
-	//vector<string> tmp_vector = v;
 	v = tackleisNonterminalVector(v, lr0);
-
-	if (i_cnt == 0) {
-		printIndex();
-		printStringVector(v);
-		cout << "-----------------------------\n";
-		lr_vector.push_back(v);
-		lr_vector_indices.push_back(v_index);
-		i_cnt++;
-	}
-	
-
-	
 	vector<char> char_vector = getAllCharAfterDot(v);
 	vector<vector<string>> notOverVectors;
 	vector<int> notOverVectorIndices;
@@ -230,6 +234,11 @@ void handleLR0(vector<string> lr0, vector<string> v,int v_index) {
 		if (isEqual(v, movedVector)) {
 			cout << "I" << v_index << "   " << ">>>>" << c << "   " << "I" << v_index << endl;
 			cout << "-----------------------------\n";
+			int colIndex = getColIndex(c);
+			if (getCharType(c) == 0)
+				table_vector[v_index][colIndex] = to_string(v_index);
+			else
+				table_vector[v_index][colIndex] = "S" + to_string(v_index);
 			continue;
 		}
 			
@@ -237,24 +246,47 @@ void handleLR0(vector<string> lr0, vector<string> v,int v_index) {
 		if (mIndex != -1) {
 			cout << "I" << v_index << "   " << ">>>>" << c << "   " << "I" << mIndex << endl;
 			cout << "-----------------------------\n";
+			int colIndex = getColIndex(c);
+			if (getCharType(c) == 0)
+				table_vector[v_index][colIndex] = to_string(mIndex);
+			else
+				table_vector[v_index][colIndex] = "S" + to_string(mIndex);
 			continue;
 		}
 			
 		printIndex();
 		cout<<"I"<<v_index<< "   " << ">>>>" << c <<"   "<<"I"<<i_cnt << endl;
 		printStringVector(movedVector);
+
+		int colIndex = getColIndex(c);
+		if (getCharType(c) == 0)
+			table_vector[v_index][colIndex] = to_string(i_cnt);
+		else
+			table_vector[v_index][colIndex] = "S" + to_string(i_cnt);
+		
+
 		lr_vector.push_back(movedVector);
 		lr_vector_indices.push_back(v_index);
 		bool vector_over = check_vector_over(movedVector);
 		if (vector_over) {
-			cout << "\nvector over!!!\n";
+			movedVector[0].pop_back();
+			if (movedVector[0] == origin_lr0[0]) {
+				int overSymbolIndex = getColIndex('#');
+				table_vector[i_cnt][overSymbolIndex] = "acc";
+			}
+			else {
+				int pos_index = findIndexInLR0(origin_lr0, movedVector[0]);
+				for (int i = 0; i < 5; i++) {
+					table_vector[i_cnt][i] = "r" + to_string(pos_index);
+				}
+			}
+			
 		}
-		else {
+		else{
 			cout << "\nnot over!\n";
 			notOverVectors.push_back(movedVector);
 			notOverVectorIndices.push_back(i_cnt);
 		}
-		//cout << "lr_vector size:" << lr_vector.size() << endl;
 		cout << "-----------------------------\n";
 		i_cnt++;
 		
@@ -265,7 +297,7 @@ void handleLR0(vector<string> lr0, vector<string> v,int v_index) {
 	}
 }
 //根据字符找到二维表中列的索引
-int getColIndex(vector<char> symbol_vector, char c) {
+int getColIndex(char c) {
 	int index = 0;
 	for (char symbol : symbol_vector) {
 		if (symbol == c) {
@@ -284,7 +316,7 @@ int getCharType(char c) {
 	else
 		return 1;
 }
-
+//判断两个vector<string>是否完全相同
 bool isEqual(vector<string> vec1, vector<string> vec2) {
 	if (vec1.size() != vec2.size()) {  // 先判断大小是否相等
 		return false;
@@ -296,10 +328,28 @@ bool isEqual(vector<string> vec1, vector<string> vec2) {
 	}
 	return true;
 }
-
+//判断vector<string>是否在vector<vector<string>>中,返回下标
 int findIndex(vector<vector<string>> vec, vector<string> target) {
 	for (int i = 0; i < vec.size(); ++i) {
 		if (isEqual(vec[i], target)) {
+			return i;
+		}
+	}
+	return -1;
+}
+//打印表格
+void printTable() {
+	for (int i = 0; i < table_vector.size(); i++) {
+		for (int j = 0; j < table_vector[i].size(); j++) {
+			cout << table_vector[i][j] << "\t";
+		}
+		cout << endl;
+	}
+}
+
+int findIndexInLR0(vector<string> lr0, string s) {
+	for (int i = 0; i < lr0.size(); i++) {
+		if (lr0[i] == s) {
 			return i;
 		}
 	}
