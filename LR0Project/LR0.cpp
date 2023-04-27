@@ -22,17 +22,14 @@ char getCharAfterDot(string);
 vector<string> getRuleVectorWithStartLetter(char, vector<string>);
 vector<char> getAllCharAfterDot(vector<string>);
 vector<string> getMovedVector(vector<string>, char);
-void printStringVector(vector<string>);
 vector<string> tackleisNonterminalVector(vector<string>, vector<string>);
 void writeFile(string, string);
-void printIndex();
 void addRow();
 void handleLR0(vector<string>, vector<string>, int);
 int getColIndex(char);
 int getCharType(char);
 bool isEqual(vector<string>, vector<string>);
 int findIndex(vector<vector<string>>, vector<string>);
-void printTable();
 int findIndexInLR0(vector<string>, string);
 int getNonterminalNum();
 
@@ -179,12 +176,6 @@ vector<string> getMovedVector(vector<string> vec, char c) {
 	}
 	return result_vector;
 }
-//打印string类型的vector
-void printStringVector(vector<string> v) {
-	for (string element : v) {
-		cout << element << endl;
-	}
-}
 //处理vector中含有"."后面是非终结符的产生式
 vector<string> tackleisNonterminalVector(vector<string> v, vector<string> lr0) {
 	for (string rule : v) {
@@ -214,10 +205,7 @@ void writeFile(string outfilename, string content) {
 	}
 	outfile.close();//关闭 ofstream
 }
-//打印当前的状态索引
-void printIndex() {
-	cout << "I" << i_cnt << ":" << endl;
-}
+//向表格中添加一行
 void addRow() {
 	vector<string> row_vector(symbol_vector.size(), " ");
 	table_vector.push_back(row_vector);
@@ -326,15 +314,6 @@ int findIndex(vector<vector<string>> vec, vector<string> target) {
 		}
 	}
 	return -1;
-}
-//打印表格
-void printTable() {
-	for (int i = 0; i < table_vector.size(); i++) {
-		for (int j = 0; j < table_vector[i].size(); j++) {
-			cout << table_vector[i][j] << "\t";
-		}
-		cout << endl;
-	}
 }
 //判断string是否在vector<string>中,返回下标
 int findIndexInLR0(vector<string> lr0, string s) {
