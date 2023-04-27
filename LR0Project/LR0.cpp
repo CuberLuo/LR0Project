@@ -32,16 +32,15 @@ bool isEqual(vector<string>, vector<string>);
 int findIndex(vector<vector<string>>, vector<string>);
 int findIndexInLR0(vector<string>, string);
 int getNonterminalNum();
+stringstream getOutputStream();
 
 int main() {
 	vector<string> lr0 = origin_lr0;
+	//lr0每个产生式的"->"后面加"."
 	for (int i = 0; i < lr0.size(); i++) {
 		size_t arrow_pos = lr0[i].find("->");
 		lr0[i].insert(arrow_pos + 2, ".");
 	}
-	bool isOver = false;
-	
-	//二维数组表格初始化
 	
 	vector<string> tmp_vector = { lr0[0] };
 	tmp_vector = tackleisNonterminalVector(tmp_vector, lr0);
@@ -52,31 +51,8 @@ int main() {
 
 	handleLR0(lr0, tmp_vector,0);
 
-	stringstream result_stream;
-	result_stream <<"|" << setw(10) << "|"
-		<< setw(16) << "ACTION" << setw(9) << "|"
-		<< setw(9) << "GOTO" << setw(7) << "|\n";
-
-	result_stream <<"|" << setw(7)<<"Status"<<setw(3) << "|" << setw(25) << setfill('-') << "|" << setw(16) << "|\n";
-	result_stream.fill(' ');
-
-	result_stream <<"|" << setw(10) << "|";
-	for (char symbol : symbol_vector) {
-		result_stream <<setw(4) << symbol << "|";
-	}
-	result_stream << endl;
-
-	result_stream << "|" << setw(10) <<setfill('-') << "|" << setw(25)  << "|" << setw(16) << "|\n";
-	result_stream.fill(' ');
-
-	for (int i = 0; i < table_vector.size(); i++) {
-		result_stream <<"|"<< setw(5) << i << setw(5) << "|";
-		for (int j = 0; j < table_vector[i].size(); j++) {
-			result_stream << setw(4) << table_vector[i][j] << "|";
-		}
-		result_stream << endl;
-	}
-
+	stringstream result_stream=getOutputStream();
+	
 	writeFile("output.txt", result_stream.str());
 	return 0;
 }
@@ -333,4 +309,32 @@ int getNonterminalNum() {
 		}
 	}
 	return cnt;
+}
+//获取输出流
+stringstream getOutputStream() {
+	stringstream result_stream;
+	result_stream << "|" << setw(10) << "|"
+		<< setw(16) << "ACTION" << setw(9) << "|"
+		<< setw(9) << "GOTO" << setw(7) << "|\n";
+
+	result_stream << "|" << setw(7) << "Status" << setw(3) << "|" << setw(25) << setfill('-') << "|" << setw(16) << "|\n";
+	result_stream.fill(' ');
+
+	result_stream << "|" << setw(10) << "|";
+	for (char symbol : symbol_vector) {
+		result_stream << setw(4) << symbol << "|";
+	}
+	result_stream << endl;
+
+	result_stream << "|" << setw(10) << setfill('-') << "|" << setw(25) << "|" << setw(16) << "|\n";
+	result_stream.fill(' ');
+
+	for (int i = 0; i < table_vector.size(); i++) {
+		result_stream << "|" << setw(5) << i << setw(5) << "|";
+		for (int j = 0; j < table_vector[i].size(); j++) {
+			result_stream << setw(4) << table_vector[i][j] << "|";
+		}
+		result_stream << endl;
+	}
+	return result_stream;
 }
