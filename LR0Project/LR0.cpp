@@ -11,7 +11,7 @@ vector<vector<string>> lr_vector;
 vector<int> lr_vector_indices;
 vector<vector<string>> table_vector;
 vector<string> origin_lr0 = { "S->E", "E->aA", "E->bB", "A->cA", "A->d", "B->cB", "B->d" };
-vector<char> symbol_vector = { 'a','b','c','d','#','E','A','B' };
+vector<char> symbol_vector = { 'a','b','c','d','#','A','B','E','S' };
 
 bool check_over(string);
 bool check_vector_over(vector<string>);
@@ -37,6 +37,8 @@ void handleOutput();
 
 int main() {
 	vector<string> lr0 = origin_lr0;
+	lr0.insert(lr0.begin(), "X->S");//添加X->S成为拓广文法
+	origin_lr0 = lr0;
 	//lr0每个产生式的"->"后面加"."
 	for (int i = 0; i < lr0.size(); i++) {
 		size_t arrow_pos = lr0[i].find("->");
@@ -322,9 +324,9 @@ void handleOutput() {
 	stringstream result_stream;
 	result_stream << "|" << setw(10) << "|"
 		<< setw(16) << "ACTION" << setw(9) << "|"
-		<< setw(9) << "GOTO" << setw(7) << "|\n";
+		<< setw(12) << "GOTO" << setw(9) << "|\n";
 
-	result_stream << "|" << setw(7) << "Status" << setw(3) << "|" << setw(25) << setfill('-') << "|" << setw(16) << "|\n";
+	result_stream << "|" << setw(7) << "Status" << setw(3) << "|" << setw(25) << setfill('-') << "|" << setw(21) << "|\n";
 	result_stream.fill(' ');
 
 	result_stream << "|" << setw(10) << "|";
@@ -333,7 +335,7 @@ void handleOutput() {
 	}
 	result_stream << endl;
 
-	result_stream << "|" << setw(10) << setfill('-') << "|" << setw(25) << "|" << setw(16) << "|\n";
+	result_stream << "|" << setw(10) << setfill('-') << "|" << setw(25) << "|" << setw(21) << "|\n";
 	result_stream.fill(' ');
 
 	for (int i = 0; i < table_vector.size(); i++) {
